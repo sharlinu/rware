@@ -30,7 +30,7 @@ class _VectorWriter:
 
     def write(self, data):
         data_size = len(data)
-        self.vector[self.idx : self.idx + data_size] = data
+        self.vector[self.idx: self.idx + data_size] = data
         self.idx += data_size
 
     def skip(self, bits):
@@ -58,22 +58,23 @@ class RewardType(Enum):
     TWO_STAGE = 2
 
 
-class ObserationType(Enum):
+class ObservationType(Enum):
     DICT = 0
     FLATTENED = 1
     IMAGE = 2
+
 
 class ImageLayer(Enum):
     """
     Input layers of image-style observations
     """
-    SHELVES = 0 # binary layer indicating shelves (also indicates carried shelves)
-    REQUESTS = 1 # binary layer indicating requested shelves
-    AGENTS = 2 # binary layer indicating agents in the environment (no way to distinguish agents)
-    AGENT_DIRECTION = 3 # layer indicating agent directions as int (see Direction enum + 1 for values)
-    AGENT_LOAD = 4 # binary layer indicating agents with load
-    GOALS = 5 # binary layer indicating goal/ delivery locations
-    ACCESSIBLE = 6 # binary layer indicating accessible cells (all but occupied cells/ out of map)
+    SHELVES = 0  # binary layer indicating shelves (also indicates carried shelves)
+    REQUESTS = 1  # binary layer indicating requested shelves
+    AGENTS = 2  # binary layer indicating agents in the environment (no way to distinguish agents)
+    AGENT_DIRECTION = 3  # layer indicating agent directions as int (see Direction enum + 1 for values)
+    AGENT_LOAD = 4  # binary layer indicating agents with load
+    GOALS = 5  # binary layer indicating goal/ delivery locations
+    ACCESSIBLE = 6  # binary layer indicating accessible cells (all but occupied cells/ out of map)
 
 
 class Entity:
@@ -144,7 +145,6 @@ class Shelf(Entity):
 
 
 class Warehouse(gym.Env):
-
     metadata = {"render.modes": ["human", "rgb_array"]}
 
     def __init__(
@@ -160,16 +160,16 @@ class Warehouse(gym.Env):
         max_steps: Optional[int],
         reward_type: RewardType,
         layout: str = None,
-        observation_type: ObserationType=ObserationType.FLATTENED,
-        image_observation_layers: List[ImageLayer]=[
+        observation_type: ObservationType = ObservationType.FLATTENED,
+        image_observation_layers: List[ImageLayer] = [
             ImageLayer.SHELVES,
             ImageLayer.REQUESTS,
             ImageLayer.AGENTS,
             ImageLayer.GOALS,
             ImageLayer.ACCESSIBLE
         ],
-        image_observation_directional: bool=True,
-        normalised_coordinates: bool=False,
+        image_observation_directional: bool = True,
+        normalised_coordinates: bool = False,
     ):
         """The robotic warehouse environment
 
@@ -252,7 +252,7 @@ class Warehouse(gym.Env):
         self._cur_inactive_steps = None
         self._cur_steps = 0
         self.max_steps = max_steps
-        
+
         self.normalised_coordinates = normalised_coordinates
 
         sa_action_space = [len(Action), *msg_bits * (2,)]
@@ -271,7 +271,7 @@ class Warehouse(gym.Env):
         self.fast_obs = None
         self.image_obs = None
         self.observation_space = None
-        if observation_type == ObserationType.IMAGE:
+        if observation_type == ObservationType.IMAGE:
             self._use_image_obs(image_observation_layers, image_observation_directional)
         else:
             # used for DICT observation type and needed as preceeding stype to generate
@@ -280,7 +280,7 @@ class Warehouse(gym.Env):
 
         # for performance reasons we
         # can flatten the obs vector
-        if observation_type == ObserationType.FLATTENED:
+        if observation_type == ObservationType.FLATTENED:
             self._use_fast_obs()
 
         self.renderer = None
@@ -391,10 +391,10 @@ class Warehouse(gym.Env):
 
         if self.normalised_coordinates:
             location_space = spaces.Box(
-                    low=0.0,
-                    high=1.0,
-                    shape=(2,),
-                    dtype=np.float32,
+                low=0.0,
+                high=1.0,
+                shape=(2,),
+                dtype=np.float32,
             )
         else:
             location_space = spaces.MultiDiscrete(
@@ -529,13 +529,13 @@ class Warehouse(gym.Env):
                 # rotate image to be in direction of agent
                 if agent.dir == Direction.DOWN:
                     # rotate by 180 degrees (clockwise)
-                    obs = np.rot90(obs, k=2, axes=(1,2))
+                    obs = np.rot90(obs, k=2, axes=(1, 2))
                 elif agent.dir == Direction.LEFT:
                     # rotate by 90 degrees (clockwise)
-                    obs = np.rot90(obs, k=3, axes=(1,2))
+                    obs = np.rot90(obs, k=3, axes=(1, 2))
                 elif agent.dir == Direction.RIGHT:
                     # rotate by 270 degrees (clockwise)
-                    obs = np.rot90(obs, k=1, axes=(1,2))
+                    obs = np.rot90(obs, k=1, axes=(1, 2))
                 # no rotation needed for UP direction
             return obs
 
@@ -608,7 +608,7 @@ class Warehouse(gym.Env):
                     )
 
             return obs.vector
- 
+
         # write dictionary observations
         obs = {}
         if self.normalised_coordinates:
@@ -733,11 +733,11 @@ class Warehouse(gym.Env):
                 and start != target
                 and self.grid[_LAYER_SHELFS, target[1], target[0]]
                 and not (
-                    self.grid[_LAYER_AGENTS, target[1], target[0]]
-                    and self.agents[
-                        self.grid[_LAYER_AGENTS, target[1], target[0]] - 1
-                    ].carrying_shelf
-                )
+                self.grid[_LAYER_AGENTS, target[1], target[0]]
+                and self.agents[
+                    self.grid[_LAYER_AGENTS, target[1], target[0]] - 1
+                ].carrying_shelf
+            )
             ):
                 # there's a standing shelf at the target location
                 # our agent is carrying a shelf so there's no way
@@ -861,20 +861,35 @@ class Warehouse(gym.Env):
 
     def seed(self, seed=None):
         ...
-    
+
 
 if __name__ == "__main__":
-    env = Warehouse(9, 8, 3, 10, 3, 1, 5, None, None, RewardType.GLOBAL)
+    # env = Warehouse(column_height=8,
+    #                 shelf_columns=3,
+    #                 shelf_rows=1,
+    #                 n_agents=2,
+    #                 msg_bits=0,
+    #                 sensor_range=1,
+    #                 request_queue_size=2,
+    #                 max_inactivity_steps= None,
+    #                 max_steps=500,
+    #                 observation_type=ObservationType.IMAGE,
+    #                 image_observation_directional=False,
+    #                 reward_type= RewardType.GLOBAL)
+    # env = gym.make("rware-tiny-2ag-easy-v1")
+    env = gym.make('rware-img-tiny-2ag-easy-v1')
     env.reset()
     import time
     from tqdm import tqdm
 
-    time.sleep(2)
     # env.render()
     # env.step(18 * [Action.LOAD] + 2 * [Action.NOOP])
 
-    for _ in tqdm(range(1000000)):
+    for _ in tqdm(range(10)):
         # time.sleep(2)
         # env.render()
         actions = env.action_space.sample()
-        env.step(actions)
+        obs, rew, done, info = env.step(actions)
+        print(obs[0])
+        env.render()
+        time.sleep(1)

@@ -1,5 +1,5 @@
 import gym
-from .warehouse import Warehouse, RewardType, Action, ObserationType
+from .warehouse import Warehouse, RewardType, Action, ObservationType
 import itertools
 
 _sizes = {
@@ -11,30 +11,29 @@ _sizes = {
 
 _difficulty = {"-easy": 2, "": 1, "-hard": 0.5}
 
-_perms = itertools.product(_sizes.keys(), _difficulty, range(1, 20),)
-
-for size, diff, agents in _perms:
-    # normal tasks
-    gym.register(
-        id=f"rware-{size}-{agents}ag{diff}-v1",
-        entry_point="rware.warehouse:Warehouse",
-        kwargs={
-            "column_height": 8,
-            "shelf_rows": _sizes[size][0],
-            "shelf_columns": _sizes[size][1],
-            "n_agents": agents,
-            "msg_bits": 0,
-            "sensor_range": 1,
-            "request_queue_size": int(agents * _difficulty[diff]),
-            "max_inactivity_steps": None,
-            "max_steps": 500,
-            "reward_type": RewardType.INDIVIDUAL,
-        },
-    )
-
+# _perms = itertools.product(_sizes.keys(), _difficulty, range(1, 20),)
+# for size, diff, agents in _perms:
+#     # normal tasks
+#     gym.register(
+#         id=f"rware-{size}-{agents}ag{diff}-v1",
+#         entry_point="rware.warehouse:Warehouse",
+#         kwargs={
+#             "column_height": 8,
+#             "shelf_rows": _sizes[size][0],
+#             "shelf_columns": _sizes[size][1],
+#             "n_agents": agents,
+#             "msg_bits": 0,
+#             "sensor_range": 1,
+#             "request_queue_size": int(agents * _difficulty[diff]),
+#             "max_inactivity_steps": None,
+#             "max_steps": 500,
+#             "reward_type": RewardType.INDIVIDUAL,
+#         },
+#     )
+#
 
 def image_registration():
-    _observation_type = {"": ObserationType.FLATTENED, "-img": ObserationType.IMAGE}
+    _observation_type = {"": ObservationType.FLATTENED, "-img": ObservationType.IMAGE}
     _image_directional = {"": True, "-Nd": False}
     _perms = itertools.product(_sizes.keys(), _difficulty, _observation_type, _image_directional, range(1, 20),)
     for size, diff, obs_type, directional, agents in _perms:
@@ -65,21 +64,23 @@ def image_registration():
 
 
 def full_registration():
-    _observation_type = {"": ObserationType.FLATTENED, "-img": ObserationType.IMAGE}
+    _observation_type = {"": ObservationType.FLATTENED, "-img": ObservationType.IMAGE}
     _sensor_ranges = {f"-{sight}s": sight for sight in range(2, 6)}
     _sensor_ranges[""] = 1
     _image_directional = {"": True, "-Nd": False}
-    _perms = itertools.product(_sizes.keys(), _difficulty, _observation_type, _sensor_ranges, _image_directional, range(1, 20), range(1, 16),)
-    for size, diff, obs_type, sensor_range, directional, agents, column_height in _perms:
+    # _column_heights = {f"-{height}h": height for height in range(1, 16)}
+    # _column_heights[''] = 8
+    _perms = itertools.product(_sizes.keys(), _difficulty, _observation_type, _sensor_ranges, _image_directional, range(1, 20))
+    for size, diff, obs_type, sensor_range, directional, agents in _perms:
         # normal tasks with modified column height
         if directional != "" and obs_type == "":
-            # directional should only be used with image observations 
+            # directional should only be used with image observations
             continue
         gym.register(
-            id=f"rware{obs_type}{directional}{sensor_range}-{size}-{column_height}h-{agents}ag{diff}-v1",
+            id=f"rware{obs_type}{directional}{sensor_range}-{size}-{agents}ag{diff}-v1",
             entry_point="rware.warehouse:Warehouse",
             kwargs={
-                "column_height": column_height,
+                "column_height": 8,
                 "shelf_rows": _sizes[size][0],
                 "shelf_columns": _sizes[size][1],
                 "n_agents": agents,
@@ -94,40 +95,42 @@ def full_registration():
             },
         )
 
-    _rewards = {
-        "indiv": RewardType.INDIVIDUAL,
-        "global": RewardType.GLOBAL,
-        "twostage": RewardType.TWO_STAGE,
-    }
+    # _rewards = {
+    #     "indiv": RewardType.INDIVIDUAL,
+    #     "global": RewardType.GLOBAL,
+    #     "twostage": RewardType.TWO_STAGE,
+    # }
+    #
+    # _perms = itertools.product(
+    #     range(1, 5),
+    #     range(3, 10, 2),
+    #     range(1, 16),
+    #     range(1, 20),
+    #     range(1, 20),
+    #     _rewards,
+    #     _observation_type,
+    #     _sensor_ranges,
+    #     _image_directional,
+    # )
+    #
+    # for rows, cols, column_height, agents, req, rew, obs_type, sensor_range, directional in _perms:
+    #     gym.register(
+    #         id=f"rware{obs_type}{directional}{sensor_range}-{rows}x{cols}-{column_height}h-{agents}ag-{req}req-{rew}-v1",
+    #         entry_point="rware.warehouse:Warehouse",
+    #         kwargs={
+    #             "column_height": column_height,
+    #             "shelf_rows": rows,
+    #             "shelf_columns": cols,
+    #             "n_agents": agents,
+    #             "msg_bits": 0,
+    #             "sensor_range": _sensor_ranges[sensor_range],
+    #             "request_queue_size": req,
+    #             "max_inactivity_steps": None,
+    #             "max_steps": 500,
+    #             "reward_type": _rewards[rew],
+    #             "observation_type": _observation_type[obs_type],
+    #             "image_observation_directional": _image_directional[directional],
+    #         },
+    #     )
 
-    _perms = itertools.product(
-        range(1, 5),
-        range(3, 10, 2),
-        range(1, 16),
-        range(1, 20),
-        range(1, 20),
-        _rewards,
-        _observation_type,
-        _sensor_ranges,
-        _image_directional,
-    )
-
-    for rows, cols, column_height, agents, req, rew, obs_type, sensor_range, directional in _perms:
-        gym.register(
-            id=f"rware{obs_type}{directional}{sensor_range}-{rows}x{cols}-{column_height}h-{agents}ag-{req}req-{rew}-v1",
-            entry_point="rware.warehouse:Warehouse",
-            kwargs={
-                "column_height": column_height,
-                "shelf_rows": rows,
-                "shelf_columns": cols,
-                "n_agents": agents,
-                "msg_bits": 0,
-                "sensor_range": _sensor_ranges[sensor_range],
-                "request_queue_size": req,
-                "max_inactivity_steps": None,
-                "max_steps": 500,
-                "reward_type": _rewards[rew],
-                "observation_type": _observation_type[obs_type],
-                "image_observation_directional": _image_directional[directional],
-            },
-        )
+full_registration()
